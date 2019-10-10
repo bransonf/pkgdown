@@ -96,14 +96,24 @@ deploy_site_github <- function(
   cat_line("Setting private key permissions to 0600")
   fs::file_chmod(ssh_id_file, "0600")
 
-  deploy_local(pkg, repo_slug = repo_slug, commit_message = commit_message, ...)
+  deploy_local(pkg, repo_slug = construct_remote_url(repo_slug = repo_slug), commit_message = commit_message, ...)
 
   rule("Deploy completed", line = 2)
 }
 
+construct_remote_url <- function(pkg, repo_slug = NULL) {
+  if (is.null(repo_slug)) {
+    pkg <- as_pkgdown(pkg)
+    gh <- rematch2::re_match(pkg$github_url, github_url_rx())
+    repo_slug <- paste0(gh$owner, "/", gh$repo)
+  }
+
+  sprintf("git@github.com:%s.git", repo_slug)
+}
+
 deploy_local <- function(
                          pkg = ".",
-                         repo_slug = NULL,
+                         remote_url = construct_remote_url(pkg),
                          commit_message = construct_commit_message(pkg),
                          ...
                          ) {
@@ -111,13 +121,7 @@ deploy_local <- function(
   dest_dir <- fs::dir_create(fs::file_temp())
   on.exit(fs::dir_delete(dest_dir))
 
-  pkg <- as_pkgdown(pkg)
-  if (is.null(repo_slug)) {
-    gh <- rematch2::re_match(pkg$github_url, github_url_rx())
-    repo_slug <- paste0(gh$owner, "/", gh$repo)
-  }
-
-  github_clone(dest_dir, repo_slug)
+  github_clone(dest_dir, remote_url)
   build_site(".",
     override = list(destination = dest_dir),
     devel = FALSE,
@@ -130,8 +134,7 @@ deploy_local <- function(
   invisible()
 }
 
-github_clone <- function(dir, repo_slug) {
-  remote_url <- sprintf("git@github.com:%s.git", repo_slug)
+github_clone <- function(dir, remote_url) {
   rule("Cloning existing site", line = 1)
   git("clone",
     "--single-branch", "-b", "gh-pages",
