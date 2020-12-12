@@ -111,7 +111,7 @@ deploy_site_github <- function(
 #' @export
 deploy_to_branch <- function(pkg = ".",
                          commit_message = construct_commit_message(pkg),
-                         branch = "gh-pages",
+                         branch = "master",
                          ...) {
   dest_dir <- fs::dir_create(fs::file_temp())
   on.exit(fs::dir_delete(dest_dir))
