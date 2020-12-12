@@ -137,7 +137,7 @@ deploy_local <- function(
 github_clone <- function(dir, remote_url) {
   rule("Cloning existing site", line = 1)
   git("clone",
-    "--single-branch", "-b", "gh-pages",
+    "--single-branch", "-b", "master",
     "--depth", "1",
     remote_url,
     dir
@@ -156,7 +156,7 @@ github_push <- function(dir, commit_message) {
 
     rule("Deploying to GitHub Pages", line = 1)
     git("remote", "-v")
-    git("push", "--force", "origin", "HEAD:gh-pages")
+    git("push", "--force", "origin", "HEAD:master")
   })
 }
 
